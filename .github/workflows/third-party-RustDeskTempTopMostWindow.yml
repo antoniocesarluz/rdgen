@@ -28,6 +28,7 @@ on:
             default: 'Windows10'
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'  # mitigates Node 20 deprecation (2026-06-08)
   project_path: WindowInjection/WindowInjection.vcxproj
 
 jobs:
