@@ -49,11 +49,11 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        if: env.CREATE_IMAGE == 'true'
+        if: steps.creds.outputs.HAS_CREDS == 'true'
 
       - name: Build and push
         uses: docker/build-push-action@v6
-        if: env.CREATE_IMAGE == 'true'
+        if: steps.creds.outputs.HAS_CREDS == 'true'
         with:
           push: true
           tags: ${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ env.IMAGE_TAG }}
