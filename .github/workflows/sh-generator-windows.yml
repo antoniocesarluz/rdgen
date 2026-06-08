@@ -69,7 +69,7 @@ jobs:
   build-for-windows-flutter:
     name: Build Windows
     needs: [build-RustDeskTempTopMostWindow, generate-bridge, setup]
-    runs-on: self-hosted
+    runs-on: windows-2022  # 2026-06-08: trocado de self-hosted para GitHub-hosted (não depende de máquina Windows local)
     strategy:
       fail-fast: false
       matrix:
