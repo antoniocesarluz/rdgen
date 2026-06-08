@@ -8,6 +8,9 @@ on:
     tags:
       - 'v*.*.*'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'  # 2026-06-08: mitigates Node 20 deprecation
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,9 +30,19 @@ jobs:
             echo "CREATE_IMAGE=false" >> "$GITHUB_ENV"
           fi
 
+      - name: Detect Docker Hub credentials
+        id: creds
+        run: |
+          if [ -n "${{ vars.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "HAS_CREDS=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "HAS_CREDS=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DOCKERHUB_USERNAME/DOCKERHUB_TOKEN not configured in repo — skipping push"
+          fi
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
-        if: env.CREATE_IMAGE == 'true'
+        if: steps.creds.outputs.HAS_CREDS == 'true'
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
