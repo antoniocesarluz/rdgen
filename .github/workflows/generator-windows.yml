@@ -620,7 +620,7 @@ jobs:
             # Split em 4 MiB chunks + 4 curls paralelos por arquivo.
             CHUNK_BYTES=4194304     # 4 MiB
             PARALLEL_JOBS=4
-            AUTH_HEADER=*** Bearer ${{env.token }}"
+            AUTH_HEADER="Authorization: Bearer ${{env.token }}"
             GENURL="${{ secrets.GENURL }}/save_custom_client"
             UUID="${{ env.uuid }}"
             FILENAME="${{ env.filename }}"
