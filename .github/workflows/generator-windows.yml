@@ -605,17 +605,74 @@ jobs:
         run: |
           mv ./SignOutput/rustdesk.msi "./SignOutput/${{ env.filename }}.msi" || echo "rustdesk"
 
+
       - name: send file to rdgen server
-        if: ${{ env.rdgen == 'true' }}
+        if: ${ env.rdgen == 'true' }
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
           shell: bash
           command: |
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./SignOutput/${{ env.filename }}.exe" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./SignOutput/${{ env.filename }}.msi" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client || true
+            set -e
+            # FIX 2026-06-29: chunked parallel upload. Single curl a 125 KB/s
+            # (Azure-US -> DB3-Recife) nao fecha o budget para .msi 1.4.8 (~26MB).
+            # Split em 4 MiB chunks + 4 curls paralelos por arquivo.
+            CHUNK_BYTES=4194304     # 4 MiB
+            PARALLEL_JOBS=4
+            AUTH_HEADER=*** Bearer ${{env.token }}"
+            GENURL="${{ secrets.GENURL }}/save_custom_client"
+            UUID="${{ env.uuid }}"
+            FILENAME="${{ env.filename }}"
 
+            upload_one() {
+              local f="$1" idx="$2" total="$3"
+              local attempts=0
+              while [ $attempts -lt 4 ]; do
+                attempts=$((attempts+1))
+                if curl -sS --max-time 240 -o /dev/null \
+                     -H "$AUTH_HEADER" \
+                     -F "file=@${f}" \
+                     -F "uuid=$UUID" \
+                     -F "chunk_index=${idx}" \
+                     -F "total_chunks=${total}" \
+                     -F "filename=${FILENAME}.${ext}" \
+                     "$GENURL"; then
+                  return 0
+                fi
+                sleep $((attempts * 2))
+              done
+              echo "    chunk $idx falhou apos 4 tentativas"
+              return 1
+            }
+            export -f upload_one
+            export AUTH_HEADER GENURL UUID FILENAME
+
+            upload_artifact() {
+              local artifact_path="$1" ext="$2"
+              local chunk_dir
+              chunk_dir="$(mktemp -d)"
+              split -b "$CHUNK_BYTES" -d -a 3 "$artifact_path" "$chunk_dir/chunk_"
+              local files=( "$chunk_dir"/chunk_* )
+              local total="${#files[@]}"
+              echo "  $ext -> $total chunks de 4 MiB"
+              local rc=0 i=0
+              for f in "${files[@]}"; do
+                while [ "$(jobs -rp | wc -l)" -ge "$PARALLEL_JOBS" ]; do
+                  wait -n || rc=$?
+                done
+                upload_one "$f" "$i" "$total" &
+                i=$((i+1))
+              done
+              wait || rc=$?
+              rm -rf "$chunk_dir"
+              return $rc
+            }
+
+            echo "Upload .exe (paralelo):"
+            upload_artifact "./SignOutput/${FILENAME}.exe" exe
+            echo "Upload .msi (paralelo):"
+            upload_artifact "./SignOutput/${FILENAME}.msi" msi
       - name: send file to api server
         if: ${{ env.rdgen == 'false' }}
         uses: nick-fields/retry@v3
