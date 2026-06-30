@@ -45,7 +45,7 @@ jobs:
   setup:
     uses: ./.github/workflows/fetch-encrypted-secrets.yml
     with:
-      zip_url_json: ${{ inputs.zip_url }}
+      zip_url_json: '${{ inputs.zip_url }}'
 
   generate-bridge-linux:
     uses: ./.github/workflows/bridge.yml
