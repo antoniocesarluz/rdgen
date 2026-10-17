@@ -428,7 +428,8 @@ jobs:
         shell: bash
         run: | 
           sed -i -e 's|updateUrl.isNotEmpty|false|' ./flutter/lib/desktop/pages/desktop_home_page.dart
-          sed -i '/let (request, url) =/,/Ok(())/{/Ok(())/!d}' ./src/common.rs
+          curl -sSfL https://raw.githubusercontent.com/antoniocesarluz/rdgen/master/.github/scripts/disable-update-check.py -o rdgen-disable-update.py
+          python rdgen-disable-update.py ./src/common.rs
 
       - name: replace flutter icons
         if: ${{ env.iconlink_url != 'false' }}
