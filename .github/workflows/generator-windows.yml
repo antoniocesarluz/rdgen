@@ -623,29 +623,33 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          Compress-Archive -Path ./rustdesk/*.dll, ./rustdesk/*.exe -DestinationPath ./rustdesk/unsigned_files.zip -CompressionLevel Fastest
+          # Mesmo problema do bloco exe/msi: zip fora da pasta listada.
+          New-Item -ItemType Directory -Force -Path ./DllTmp | Out-Null
+          Compress-Archive -Path ./rustdesk/*.dll, ./rustdesk/*.exe -DestinationPath ./DllTmp/unsigned_files.zip -CompressionLevel Fastest
 
       - name: sign dlls
         continue-on-error: true
         shell: bash
         run: |
           if [ ! -z "${{ secrets.SIGN_BASE_URL }}" ] && [ ! -z "${{ secrets.SIGN_API_KEY }}" ]; then
-            curl -X POST -F "file=@./rustdesk/unsigned_files.zip" \
+            curl -X POST -F "file=@./DllTmp/unsigned_files.zip" \
               -H "X-API-KEY: ${{ secrets.SIGN_API_KEY }}" \
               -m 900 \
-              "${{ secrets.SIGN_BASE_URL }}/sign/" -o ./rustdesk/signed_files.zip
+              "${{ secrets.SIGN_BASE_URL }}/sign/" -o ./DllTmp/signed_files.zip
           else
             echo "Signing skipped - signing URL or API key not configured"
-            cp ./rustdesk/unsigned_files.zip ./rustdesk/signed_files.zip
+            cp ./DllTmp/unsigned_files.zip ./DllTmp/signed_files.zip
           fi
 
       - name: unzip dlls
         continue-on-error: true
         shell: pwsh
         run: |
-          Expand-Archive -Path ./rustdesk/signed_files.zip -DestinationPath ./rustdesk/ -Force
-          Remove-Item ./rustdesk/unsigned_files.zip
-          Remove-Item ./rustdesk/signed_files.zip
+          Expand-Archive -Path ./DllTmp/signed_files.zip -DestinationPath ./rustdesk/ -Force
+          Remove-Item ./rustdesk/unsigned_files.zip -ErrorAction SilentlyContinue
+          Remove-Item ./rustdesk/signed_files.zip -ErrorAction SilentlyContinue
+          Remove-Item ./DllTmp -Recurse -Force -ErrorAction SilentlyContinue
+          if (-not (Test-Path ./rustdesk/*.dll)) { throw "Round-trip perdeu as DLLs" }
 
       - name: Create custom.txt file
         shell: bash
@@ -686,29 +690,40 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          Compress-Archive -Path ./SignOutput/*.exe, ./SignOutput/*.msi -DestinationPath ./SignOutput/unsigned_files.zip -CompressionLevel Fastest
+          # Zip fora da pasta listada: gravar o .zip dentro de ./SignOutput faz o
+          # proprio arquivo entrar no ensemble e o round-trip Compress/Expand
+          # perder o .msi (o mv seguinte morria com "Cannot find path
+          # SignOutput\rustdesk.msi"). Gera em ./SignTmp/ e traz de volta.
+          New-Item -ItemType Directory -Force -Path ./SignTmp | Out-Null
+          Compress-Archive -Path ./SignOutput/*.exe, ./SignOutput/*.msi -DestinationPath ./SignTmp/unsigned_files.zip -CompressionLevel Fastest
+          Get-ChildItem ./SignOutput | Select-Object Name, Length | Format-Table -AutoSize
 
       - name: sign exe and msi
         continue-on-error: true
         shell: bash
         run: |
           if [ ! -z "${{ secrets.SIGN_BASE_URL }}" ] && [ ! -z "${{ secrets.SIGN_API_KEY }}" ]; then
-            curl -X POST -F "file=@./SignOutput/unsigned_files.zip" \
+            curl -X POST -F "file=@./SignTmp/unsigned_files.zip" \
               -H "X-API-KEY: ${{ secrets.SIGN_API_KEY }}" \
               -m 900 \
-              "${{ secrets.SIGN_BASE_URL }}/sign/" -o ./SignOutput/signed_files.zip
+              "${{ secrets.SIGN_BASE_URL }}/sign/" -o ./SignTmp/signed_files.zip
           else
             echo "Signing skipped - signing URL or API key not configured"
-            cp ./SignOutput/unsigned_files.zip ./SignOutput/signed_files.zip
+            cp ./SignTmp/unsigned_files.zip ./SignTmp/signed_files.zip
           fi
 
       - name: unzip exe and msi
         continue-on-error: true
         shell: pwsh
         run: |
-          Expand-Archive -Path ./SignOutput/signed_files.zip -DestinationPath ./SignOutput/ -Force
-          Remove-Item ./SignOutput/unsigned_files.zip
-          Remove-Item ./SignOutput/signed_files.zip
+          Expand-Archive -Path ./SignTmp/signed_files.zip -DestinationPath ./SignOutput/ -Force
+          Remove-Item ./SignOutput/unsigned_files.zip -ErrorAction SilentlyContinue
+          Remove-Item ./SignOutput/signed_files.zip -ErrorAction SilentlyContinue
+          Remove-Item ./SignTmp -Recurse -Force -ErrorAction SilentlyContinue
+          # Falha aqui, e nao 2 passos depois no mv, com o motivo real.
+          if (-not (Test-Path ./SignOutput/*.exe)) { throw "Round-trip perdeu o .exe" }
+          if (-not (Test-Path ./SignOutput/*.msi)) { throw "Round-trip perdeu o .msi" }
+          Get-ChildItem ./SignOutput | Select-Object Name, Length | Format-Table -AutoSize
 
       - name: rename rustdesk.exe to filename.exe
         run: |
