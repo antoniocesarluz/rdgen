@@ -464,7 +464,7 @@ jobs:
         shell: bash
         run: |
           if [ ! -z "${{ secrets.SIGN_BASE_URL }}" ] && [ ! -z "${{ secrets.SIGN_API_KEY }}" ]; then
-            curl -X POST -F "file=@./Release/unsigned_files.zip" \
+            curl --fail -X POST -F "file=@./Release/unsigned_files.zip" \
               -H "X-API-KEY: ${{ secrets.SIGN_API_KEY }}" \
               -m 900 \
               "${{ secrets.SIGN_BASE_URL }}/sign/" -o ./Release/signed_files.zip
@@ -514,7 +514,7 @@ jobs:
         shell: bash
         run: |
           if [ ! -z "${{ secrets.SIGN_BASE_URL }}" ] && [ ! -z "${{ secrets.SIGN_API_KEY }}" ]; then
-            curl -X POST -F "file=@./SignOutput/unsigned_files.zip" \
+            curl --fail -X POST -F "file=@./SignOutput/unsigned_files.zip" \
               -H "X-API-KEY: ${{ secrets.SIGN_API_KEY }}" \
               -m 900 \
               "${{ secrets.SIGN_BASE_URL }}/sign/" -o ./SignOutput/signed_files.zip
@@ -539,13 +539,13 @@ jobs:
         if: ${{ env.rdgen == 'true' }}
         shell: bash
         run: |
-          curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./SignOutput/${{ env.filename }}.exe" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
+          curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./SignOutput/${{ env.filename }}.exe" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
 
       - name: send file to api server
         if: ${{ env.rdgen == 'false' }}
         shell: bash
         run: |
-          curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./SignOutput/${{ env.filename }}.exe" ${{ env.apiServer }}/api/save_custom_client
+          curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./SignOutput/${{ env.filename }}.exe" ${{ env.apiServer }}/api/save_custom_client
 
   cleanup:
     needs: [build-for-windows-sciter]
