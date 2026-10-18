@@ -691,10 +691,10 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.deb" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.rpm" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-suse-${{ matrix.job.arch }}.rpm" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.pkg.tar.zst" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client || true
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.deb" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.rpm" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-suse-${{ matrix.job.arch }}.rpm" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.pkg.tar.zst" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client || true
 
       - name: send file to api server
         if: ${{ env.rdgen == 'false' }}
@@ -705,10 +705,10 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.deb" ${{ env.apiServer }}/api/save_custom_client
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.rpm" ${{ env.apiServer }}/api/save_custom_client
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-suse-${{ matrix.job.arch }}.rpm" ${{ env.apiServer }}/api/save_custom_client
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.pkg.tar.zst" ${{ env.apiServer }}/api/save_custom_client || true
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.deb" ${{ env.apiServer }}/api/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.rpm" ${{ env.apiServer }}/api/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-suse-${{ matrix.job.arch }}.rpm" ${{ env.apiServer }}/api/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-${{ matrix.job.arch }}.pkg.tar.zst" ${{ env.apiServer }}/api/save_custom_client || true
 
       - name: Upload deb
         uses: actions/upload-artifact@master
@@ -1247,7 +1247,7 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-unattended-wayland-x86_64.deb" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-unattended-wayland-x86_64.deb" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
 
       - name: send file to api server
         if: ${{ env.rdgen == 'false' && env.DRM_SUPPORTED == 'true' }}
@@ -1258,7 +1258,7 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-unattended-wayland-x86_64.deb" ${{ env.apiServer }}/api/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./output/${{ env.filename }}-unattended-wayland-x86_64.deb" ${{ env.apiServer }}/api/save_custom_client
 
       - name: Upload deb
         uses: actions/upload-artifact@master
@@ -1396,7 +1396,7 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./appimage/${{ env.filename }}-${{ matrix.job.arch }}.AppImage" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./appimage/${{ env.filename }}-${{ matrix.job.arch }}.AppImage" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
           
       - name: send file to api server
         if: ${{ env.rdgen == 'false' }}
@@ -1407,7 +1407,7 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./appimage/${{ env.filename }}-${{ matrix.job.arch }}.AppImage" ${{ env.apiServer }}/api/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./appimage/${{ env.filename }}-${{ matrix.job.arch }}.AppImage" ${{ env.apiServer }}/api/save_custom_client
 
   build-flatpak:
     name: Build flatpak ${{ matrix.job.target }}${{ matrix.job.suffix }}
@@ -1535,7 +1535,7 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./flatpak/${{ env.filename }}-${{ matrix.job.arch }}.flatpak" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./flatpak/${{ env.filename }}-${{ matrix.job.arch }}.flatpak" -F "uuid=${{ env.uuid }}" ${{ secrets.GENURL }}/save_custom_client
           
       - name: send file to api server
         if: ${{ env.rdgen == 'false' }}
@@ -1546,7 +1546,7 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./flatpak/${{ env.filename }}-${{ matrix.job.arch }}.flatpak" ${{ env.apiServer }}/api/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./flatpak/${{ env.filename }}-${{ matrix.job.arch }}.flatpak" ${{ env.apiServer }}/api/save_custom_client
 
   deploy:
     needs: [build-rustdesk-linux,build-flatpak,build-appimage]
