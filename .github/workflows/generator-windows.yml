@@ -673,18 +673,32 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build msi
-        continue-on-error: true
+        # Sem continue-on-error: se o MSI nao sair, o upload quebra 2 passos
+        # depois com "Cannot find path SignOutput\*.msi" e a causa real fica
+        # escondida. O .msi e parte do entregavel.
         if: env.UPLOAD_ARTIFACT == 'true'
+        shell: pwsh
         run: |
           $myappname = "${{ env.appname }}" -replace '\s','_'
-          cp "rustdesk/${{ env.appname }}.exe" "rustdesk/${myappname}.exe" -ErrorAction SilentlyContinue
-          pushd ./res/msi
+          Copy-Item "rustdesk/${{ env.appname }}.exe" "rustdesk/${myappname}.exe" -ErrorAction SilentlyContinue
+          Push-Location ./res/msi
           python preprocess.py --app-name "$myappname" --arp -d ../../rustdesk
           nuget restore msi.sln
-          msbuild msi.sln -p:Configuration=Release -p:Platform=x64 /p:TargetVersion=Windows10
-          cp ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk-latest.msi
-          mv ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk.msi
-          sha256sum ../../SignOutput/rustdesk.msi
+          # O Package.wixproj e SDK-style (WiXToolSet.Sdk 4.x): o restore do
+          # NuGet nao gera o obj/project.assets.json dele, e o msbuild falha com
+          # "project.assets.json file does not exist. Restore the project
+          # before trying to build again". "-restore" faz o MSBuild restaurar
+          # os projetos SDK-style antes de compilar.
+          msbuild msi.sln -restore -p:Configuration=Release -p:Platform=x64 -p:TargetVersion=Windows10
+          Pop-Location
+          if (-not (Test-Path ./Package/bin/x64/Release/en-us/Package.msi)) {
+            Get-ChildItem -Recurse ./res/msi -Filter *.msi -ErrorAction SilentlyContinue |
+              Select-Object FullName, Length | Format-Table -AutoSize
+            throw "WiX nao gerou Package.msi (SDK-style restore falhou)"
+          }
+          Copy-Item ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk-latest.msi
+          Move-Item ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk.msi
+          Get-FileHash ../../SignOutput/rustdesk.msi -Algorithm SHA256 | Format-List
 
       - name: zip exe and msi
         continue-on-error: true
