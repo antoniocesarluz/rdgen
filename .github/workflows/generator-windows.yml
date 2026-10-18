@@ -689,15 +689,21 @@ jobs:
           # Version da solucao; o build de 16/out que gerou o .msi usou esta
           # forma, entao manter ela minimiza as variaveis.)
           msbuild msi.sln -p:Configuration=Release -p:Platform=x64 -p:TargetVersion=Windows10
-          Pop-Location
-          if (-not (Test-Path ./Package/bin/x64/Release/en-us/Package.msi)) {
-            Get-ChildItem -Recurse ./res/msi -Filter *.msi -ErrorAction SilentlyContinue |
-              Select-Object FullName, Length | Format-Table -AutoSize
-            throw "WiX nao gerou Package.msi (SDK-style restore falhou)"
+          # Copia/move aqui DENTRO de res/msi: os caminhos ./Package/bin/... e
+          # ../../SignOutput so existem com o cwd em res/msi. A versao
+          # original fazia isso depois do Pop-Location, com caminho relativo
+          # apontando para fora de res/msi, e o Test-Path falhava (o .msi era
+          # gerado corretamente, mas a copia nunca acontecia).
+          $msi = ./Package/bin/x64/Release/en-us/Package.msi
+          if (-not (Test-Path $msi)) {
+            Get-ChildItem -Recurse . -Filter *.msi -ErrorAction SilentlyContinue |
+              Select-Object FullName, Length | Format-Table -AutoSize | Out-String
+            throw "WiX nao gerou Package.msi em $msi"
           }
-          Copy-Item ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk-latest.msi
-          Move-Item ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk.msi
-          Get-FileHash ../../SignOutput/rustdesk.msi -Algorithm SHA256 | Format-List
+          Copy-Item $msi ../../SignOutput/rustdesk-latest.msi
+          Move-Item $msi ../../SignOutput/rustdesk.msi
+          Pop-Location
+          Get-FileHash ./SignOutput/rustdesk.msi -Algorithm SHA256 | Format-List | Out-String
 
       - name: zip exe and msi
         continue-on-error: true
