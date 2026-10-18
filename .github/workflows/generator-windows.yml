@@ -632,7 +632,7 @@ jobs:
         shell: bash
         run: |
           if [ ! -z "${{ secrets.SIGN_BASE_URL }}" ] && [ ! -z "${{ secrets.SIGN_API_KEY }}" ]; then
-            curl -X POST -F "file=@./DllTmp/unsigned_files.zip" \
+            curl --fail -X POST -F "file=@./DllTmp/unsigned_files.zip" \
               -H "X-API-KEY: ${{ secrets.SIGN_API_KEY }}" \
               -m 900 \
               "${{ secrets.SIGN_BASE_URL }}/sign/" -o ./DllTmp/signed_files.zip
@@ -719,7 +719,7 @@ jobs:
         shell: bash
         run: |
           if [ ! -z "${{ secrets.SIGN_BASE_URL }}" ] && [ ! -z "${{ secrets.SIGN_API_KEY }}" ]; then
-            curl -X POST -F "file=@./SignTmp/unsigned_files.zip" \
+            curl --fail -X POST -F "file=@./SignTmp/unsigned_files.zip" \
               -H "X-API-KEY: ${{ secrets.SIGN_API_KEY }}" \
               -m 900 \
               "${{ secrets.SIGN_BASE_URL }}/sign/" -o ./SignTmp/signed_files.zip
@@ -828,8 +828,8 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./SignOutput/${{ env.filename }}.exe" ${{ env.apiServer }}/api/save_custom_client
-            curl -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./SignOutput/${{ env.filename }}.msi" ${{ env.apiServer }}/api/save_custom_client || true
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./SignOutput/${{ env.filename }}.exe" ${{ env.apiServer }}/api/save_custom_client
+            curl --fail -i -X POST -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ${{ env.token }}" -F "file=@./SignOutput/${{ env.filename }}.msi" ${{ env.apiServer }}/api/save_custom_client || true
 
   cleanup:
     needs: [build-for-windows-flutter]
