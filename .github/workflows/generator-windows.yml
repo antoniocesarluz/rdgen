@@ -682,7 +682,18 @@ jobs:
           $myappname = "${{ env.appname }}" -replace '\s','_'
           Copy-Item "rustdesk/${{ env.appname }}.exe" "rustdesk/${myappname}.exe" -ErrorAction SilentlyContinue
           Push-Location ./res/msi
-          python preprocess.py --app-name "$myappname" --arp -d ../../rustdesk
+          # "master" nao e uma versao numerica valida, e o WiX recusa com
+          # "'master' is not a valid version string". O preprocess.py le a
+          # versao do proprio .exe (args.version vazio -> "<exe> --version"),
+          # e no rustdesk/rustdesk master isso devolve "master". Passa uma
+          # versao semantica sintetica; o .msi precisa de X.Y.Z.
+          if ("${{ env.VERSION }}" -eq "master" -or "${{ env.VERSION }}" -eq "") {
+            $miVersion = "1.0.0"
+            Write-Host "VERSION='${{ env.VERSION }}' nao e versao valida para MSI; usando --version $miVersion"
+          } else {
+            $miVersion = "${{ env.VERSION }}"
+          }
+          python preprocess.py --app-name "$myappname" --arp -d ../../rustdesk --version $miVersion
           nuget restore msi.sln
           # O Package.wixproj e SDK-style (WiXToolSet.Sdk 4.x): o restore do
           # NuGet nao gera o obj/project.assets.json dele, e o msbuild falha com
