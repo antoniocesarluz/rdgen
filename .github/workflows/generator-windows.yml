@@ -690,18 +690,15 @@ jobs:
           # forma, entao manter ela minimiza as variaveis.)
           msbuild msi.sln -p:Configuration=Release -p:Platform=x64 -p:TargetVersion=Windows10
           # Copia/move aqui DENTRO de res/msi: os caminhos ./Package/bin/... e
-          # ../../SignOutput so existem com o cwd em res/msi. A versao
-          # original fazia isso depois do Pop-Location, com caminho relativo
-          # apontando para fora de res/msi, e o Test-Path falhava (o .msi era
-          # gerado corretamente, mas a copia nunca acontecia).
-          $msi = ./Package/bin/x64/Release/en-us/Package.msi
-          if (-not (Test-Path $msi)) {
-            Get-ChildItem -Recurse . -Filter *.msi -ErrorAction SilentlyContinue |
-              Select-Object FullName, Length | Format-Table -AutoSize | Out-String
-            throw "WiX nao gerou Package.msi em $msi"
+          # ../../SignOutput so resolvem com o cwd em res/msi. A versao
+          # original fazia isso depois do Pop-Location.
+          # Caminhos literais de proposito: uma variavel ($msi) chegava null no
+          # Test-Path nesta imagem do runner.
+          if (-not (Test-Path ./Package/bin/x64/Release/en-us/Package.msi)) {
+            throw "WiX nao gerou Package.msi em res/msi/Package/bin/x64/Release/en-us"
           }
-          Copy-Item $msi ../../SignOutput/rustdesk-latest.msi
-          Move-Item $msi ../../SignOutput/rustdesk.msi
+          Copy-Item ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk-latest.msi
+          Move-Item ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk.msi
           Pop-Location
           Get-FileHash ./SignOutput/rustdesk.msi -Algorithm SHA256 | Format-List | Out-String
 
