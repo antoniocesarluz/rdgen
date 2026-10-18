@@ -682,25 +682,13 @@ jobs:
           $myappname = "${{ env.appname }}" -replace '\s','_'
           Copy-Item "rustdesk/${{ env.appname }}.exe" "rustdesk/${myappname}.exe" -ErrorAction SilentlyContinue
           Push-Location ./res/msi
-          # "master" nao e uma versao numerica valida, e o WiX recusa com
-          # "'master' is not a valid version string". O preprocess.py le a
-          # versao do proprio .exe (args.version vazio -> "<exe> --version"),
-          # e no rustdesk/rustdesk master isso devolve "master". Passa uma
-          # versao semantica sintetica; o .msi precisa de X.Y.Z.
-          if ("${{ env.VERSION }}" -eq "master" -or "${{ env.VERSION }}" -eq "") {
-            $miVersion = "1.0.0"
-            Write-Host "VERSION='${{ env.VERSION }}' nao e versao valida para MSI; usando --version $miVersion"
-          } else {
-            $miVersion = "${{ env.VERSION }}"
-          }
-          python preprocess.py --app-name "$myappname" --arp -d ../../rustdesk --version $miVersion
+          python preprocess.py --app-name "$myappname" --arp -d ../../rustdesk
           nuget restore msi.sln
-          # O Package.wixproj e SDK-style (WiXToolSet.Sdk 4.x): o restore do
-          # NuGet nao gera o obj/project.assets.json dele, e o msbuild falha com
-          # "project.assets.json file does not exist. Restore the project
-          # before trying to build again". "-restore" faz o MSBuild restaurar
-          # os projetos SDK-style antes de compilar.
-          msbuild msi.sln -restore -p:Configuration=Release -p:Platform=x64 -p:TargetVersion=Windows10
+          # msbuild sem -restore: o restore e' feito pelo "nuget restore" acima.
+          # (Um "-restore" extra aqui re-dispara o restore e pode reavaliar o
+          # Version da solucao; o build de 16/out que gerou o .msi usou esta
+          # forma, entao manter ela minimiza as variaveis.)
+          msbuild msi.sln -p:Configuration=Release -p:Platform=x64 -p:TargetVersion=Windows10
           Pop-Location
           if (-not (Test-Path ./Package/bin/x64/Release/en-us/Package.msi)) {
             Get-ChildItem -Recurse ./res/msi -Filter *.msi -ErrorAction SilentlyContinue |
